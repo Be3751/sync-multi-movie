@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<head>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <video id="video_smaple" width="500" controls muted>
+    <script>
+        if(Hls.isSupported()) {
+            var hls = new Hls();
+            const video = document.getElementById('video_smaple');
+            hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+                console.log('video and hls.js are now bound together !');
+            });
+            hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+                console.log(
+                    'manifest loaded, found ' + data.levels.length + ' quality level'
+                );
+            });
+            hls.loadSource('http://localhost:8080/static/hls/output.m3u8');
+            hls.attachMedia(video);
+            
+            function showTime() {
+                const now = new Date();
+                console.log(now);
+                if (now.getHours() == 0 && now.getMinutes() == 41 && now.getSeconds() == 0) {
+                    video.play();
+                    console.log('played the video');
+                    clearInterval(timerId1)
+                }
+            }
+            const timerId1 = setInterval(showTime, 1000);
+        }
+    </script>
+</body>
