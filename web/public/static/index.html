@@ -8,14 +8,41 @@
         if(Hls.isSupported()) {
             var hls = new Hls();
             const video = document.getElementById('video_smaple');
+
+            hls.config.programDateTime = '2023-05-27T12:00:00Z';
+
             hls.on(Hls.Events.MEDIA_ATTACHED, function () {
                 console.log('video and hls.js are now bound together !');
             });
+
+            hls.on(Hls.Events.MANIFEST_LOADED, function(event, data) {
+                // タグ情報の書き換え
+                var programDateTimeTag = '#EXT-X-PROGRAM-DATETIME:';
+                var newProgramDateTimeValue = '2023-05-27T12:00:00Z';
+
+                var updatedManifest = data.manifestString.replace(programDateTimeTag, programDateTimeTag + newProgramDateTimeValue + '\\n');
+                data.manifestString = updatedManifest;
+            });
+            
             hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
                 console.log(
                     'manifest loaded, found ' + data.levels.length + ' quality level'
                 );
             });
+
+            hls.on(Hls.Events.FRAG_PARSING_METADATA, function(event, data) {
+                var metadata = data.samples[0].data; // メタデータの内容を取得
+                // EXT-X-PROGRAM-DATETIMEタグが含まれる場合は、値を更新
+                var programDateTimeTag = '#EXT-X-PROGRAM-DATETIME:';
+                var newProgramDateTimeValue = '2023-05-27T12:00:00Z';
+
+                if (metadata.indexOf(programDateTimeTag) !== -1) {
+                    var updatedMetadata = metadata.replace(programDateTimeTag, programDateTimeTag + newProgramDateTimeValue);
+                    data.samples[0].data = updatedMetadata;
+                }
+                console.log(metadata);
+            });
+
             hls.loadSource('http://localhost:8080/static/hls/output.m3u8');
             hls.attachMedia(video);
             
