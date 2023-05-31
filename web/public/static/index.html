@@ -11,6 +11,9 @@
 
             hls.config.programDateTime = '2023-05-27T12:00:00Z';
 
+            hls.loadSource('http://localhost:8080/static/hls/output.m3u8');
+            hls.attachMedia(video);
+
             hls.on(Hls.Events.MEDIA_ATTACHED, function () {
                 console.log('video and hls.js are now bound together !');
             });
@@ -22,6 +25,7 @@
 
                 var updatedManifest = data.manifestString.replace(programDateTimeTag, programDateTimeTag + newProgramDateTimeValue + '\\n');
                 data.manifestString = updatedManifest;
+                console.log('MANIFEST_LOADED')
             });
             
             hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
@@ -42,9 +46,6 @@
                 }
                 console.log(metadata);
             });
-
-            hls.loadSource('http://localhost:8080/static/hls/output.m3u8');
-            hls.attachMedia(video);
             
             function showTime() {
                 const now = new Date();
