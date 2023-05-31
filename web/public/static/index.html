@@ -9,6 +9,17 @@
             var hls = new Hls();
             const video = document.getElementById('video_smaple');
 
+            const now = new Date();
+
+            let year = now.getFullYear();
+            let month = ( '00' + (now.getFullgetMonth() + 1 )).slice( -2 );
+            let date = ( '00' + now.getDate()).slice( -2 );
+            let hour = ( '00' + now.getHours()).slice( -2 );
+            let minute = ( '00' + now.getMinutes()).slice( -2 );
+            let second = ( '00' + now.getSeconds()).slice( -2 );
+
+            console.log(year + '-' + month + '-' + date + 'T' + hour + ':' + minute + ':' + 'second' + 'Z')
+
             hls.config.programDateTime = '2023-05-27T12:00:00Z';
 
             hls.loadSource('http://localhost:8080/static/hls/output.m3u8');
