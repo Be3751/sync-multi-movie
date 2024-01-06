@@ -3,8 +3,14 @@
 </head>
 <body>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <video id="video_smaple" width="500" controls muted>
+    <video id="video_smaple" width="500" muted>
     <script>
+        const scheduledStartTime = new Date('2024-01-06T19:21:00+09:00'); // 本来はレスポンスのメタデータから取得する
+        const frameRate = 60000/1001; // 本来はレスポンスのメタデータから取得する
+        const minThresholdSec = 0.3; 
+        const maxThresholdSec = 1.0;
+        const syncIntervalMillisec = 500;
+
         if(Hls.isSupported()) {
             var hls = new Hls();
             const video = document.getElementById('video_smaple');
@@ -18,17 +24,31 @@
             });
             hls.loadSource('http://localhost:8080/static/hls/output.m3u8');
             hls.attachMedia(video);
-            
             function showTime() {
                 const now = new Date();
-                console.log(now);
-                if (now.getHours() == 0 && now.getMinutes() == 41 && now.getSeconds() == 0) {
+                if (now.valueOf() > scheduledStartTime.valueOf()) {
                     video.play();
                     console.log('played the video');
                     clearInterval(timerId1)
                 }
             }
-            const timerId1 = setInterval(showTime, 1000);
+            const timerId1 = setInterval(showTime, syncIntervalMillisec);
+
+            function syncPlaybackTime(video) {
+                const currentSec = video.currentTime;
+                const elapsedTimeSec = (Date.now() - scheduledStartTime.getTime()) / 1000;
+                const scheduledFramePosition = elapsedTimeSec * frameRate;
+                const actualFramePosition = currentSec * frameRate;
+                const delayFrames = scheduledFramePosition - actualFramePosition;
+                const delaySec = delayFrames / frameRate;
+                if (minThresholdSec < Math.abs(delaySec) && Math.abs(delaySec) < maxThresholdSec) {
+                    console.log(`Video is ${delaySec.toFixed(2)} seconds ${delaySec > 0 ? 'behind' : 'ahead'} schedule.`);
+                    video.currentTime += delaySec;
+                }
+            };
+            video.addEventListener('play', () => {
+                this.intervalId = setInterval(this.syncPlaybackTime, 100, video);
+            });
         }
     </script>
 </body>
