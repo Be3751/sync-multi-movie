@@ -1,2 +1,3 @@
-# sync-HLS-multipage
+# sync-multi-movie
+
 synchronize videos played on multi clients
