@@ -2,38 +2,32 @@
 <head>
 </head>
 <body>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <video id="video_smaple" width="500" muted>
+    <!-- ブラウザの自動再生ポリシーを回避するためにmutedを付与 -->
+    <video id="target" src="/static/mp4/sample.mp4" width="500" muted loop>
     <script>
-        const scheduledStartTime = new Date('2024-01-06T19:21:00+09:00'); // 本来はレスポンスのメタデータから取得する
+        const now = new Date();
+        let scheduledStartTime = new Date(now.getTime() + 3000); // 本来はレスポンスのメタデータから取得する
         const frameRate = 60000/1001; // 本来はレスポンスのメタデータから取得する
-        const minThresholdSec = 0.3; 
+        const minThresholdSec = 0; 
         const maxThresholdSec = 1.0;
         const syncIntervalMillisec = 500;
+        const startCheckIntervalMillisec = 100;
+        let syncPlaybackTimeId = null;
 
-        if(Hls.isSupported()) {
-            var hls = new Hls();
-            const video = document.getElementById('video_smaple');
-            hls.on(Hls.Events.MEDIA_ATTACHED, function () {
-                console.log('video and hls.js are now bound together !');
-            });
-            hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-                console.log(
-                    'manifest loaded, found ' + data.levels.length + ' quality level'
-                );
-            });
-            hls.loadSource('http://localhost:8080/static/hls/output.m3u8');
-            hls.attachMedia(video);
-            function showTime() {
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const video = document.getElementById('target');
+            const startCheckId = setInterval(function () {
                 const now = new Date();
                 if (now.valueOf() > scheduledStartTime.valueOf()) {
-                    video.play();
-                    console.log('played the video');
-                    clearInterval(timerId1)
+                    video.play().then(() => {
+                        console.log('played the video.');
+                    }).catch((error) => {
+                        console.log('failed to play the video: ' + error.message);
+                    });
+                    clearInterval(startCheckId);
                 }
-            }
-            const timerId1 = setInterval(showTime, syncIntervalMillisec);
-
+            }, startCheckIntervalMillisec);        
+            
             function syncPlaybackTime(video) {
                 const currentSec = video.currentTime;
                 const elapsedTimeSec = (Date.now() - scheduledStartTime.getTime()) / 1000;
@@ -42,13 +36,20 @@
                 const delayFrames = scheduledFramePosition - actualFramePosition;
                 const delaySec = delayFrames / frameRate;
                 if (minThresholdSec < Math.abs(delaySec) && Math.abs(delaySec) < maxThresholdSec) {
-                    console.log(`Video is ${delaySec.toFixed(2)} seconds ${delaySec > 0 ? 'behind' : 'ahead'} schedule.`);
                     video.currentTime += delaySec;
+                    console.log(`Video is ${delaySec.toFixed(2)} seconds ${delaySec > 0 ? 'behind' : 'ahead'} schedule.`);
                 }
             };
             video.addEventListener('play', () => {
-                this.intervalId = setInterval(this.syncPlaybackTime, 100, video);
+                syncPlaybackTimeId = setInterval(syncPlaybackTime, syncIntervalMillisec, video);
+                console.log('started syncronizing the video.');
             });
-        }
+            video.addEventListener('ended', () => {
+                clearInterval(syncPlaybackTimeId);
+                // ループ再生
+                scheduledStartTime = new Date();
+                console.log('ended syncronizing the video.');
+            });
+        });
     </script>
 </body>
