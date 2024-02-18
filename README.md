@@ -1,3 +1,3 @@
 # sync-multi-movie
 
-synchronize videos played on multi clients
+PoC repository for synchronizing each video playback on multi clients
